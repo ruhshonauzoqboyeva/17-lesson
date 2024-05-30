@@ -1,0 +1,25 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.container{
+    max-width: 1280px;
+    margin: 0 auto;
+}
+.wrapper{
+    width: 100%;
+}
+iframe{
+    margin: 100px auto;
+}
+table{
+margin-bottom: 100px;
+border-collapse: collapse;
+width: 800px;
+table-layout: fixed;
+text-align:center;
+}
+tbody tr:nth-child(odd){
+    background-color: rgb(253, 165, 253);
+}

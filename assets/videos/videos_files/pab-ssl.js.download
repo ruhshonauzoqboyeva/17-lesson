@@ -1,0 +1,71 @@
+'use strict';
+
+var site_id = document.querySelector('script[data-id="megapush"][data-site-id]');
+if(site_id) {
+    if(typeof site_id.hasAttribute("data-site-id") !== undefined) {
+        site_id = site_id.getAttribute('data-site-id');
+    } else {
+        site_id = 0;
+    }
+} else {
+    site_id = 0;
+}
+
+var land_id = document.querySelector('script[data-id="megapush"][data-land-id]');
+if(land_id) {
+    if(typeof land_id.hasAttribute("data-land-id") !== undefined) {
+        land_id = land_id.getAttribute('data-land-id');
+    } else {
+        land_id = 0;
+    }
+} else {
+    land_id = 0;
+}
+
+function encrypt_url(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+function SendPushMe() {
+    if ('serviceWorker' in navigator) {
+        console.log('Service Worker is supported');
+        navigator.serviceWorker.register('/pag-sw.js').then(function() {
+            window.postMessage('pag-push-ready', window.location.protocol + window.location.host);
+            return navigator.serviceWorker.ready;
+        }).then(function(reg) {
+            console.log('Service Worker is ready :^)', reg);
+            window.postMessage('pag-push-sw-ready', window.location.protocol + window.location.host);
+            let hashKey = 'BOTlzPaSYnloGeeYFneZdZxRt7JNq8fMxdwfRA13uGUgqWEx5Iyf2EjboRC6ckcF9qyIVu0Ly30xFVlVUBUG67s';
+            let postUrl = 'https://megapush.uz/api/subscribeSite';
+            reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: encrypt_url(hashKey)
+            }).then(function(sub) {
+                let rawKey = sub.getKey ? sub.getKey('p256dh') : '';
+                let key = rawKey ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey))) : '';
+                let rawAuthSecret = sub.getKey ? sub.getKey('auth') : '';
+                let authSecret = rawAuthSecret ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuthSecret))) : '';
+                fetch(postUrl, {
+                    'method': 'POST',
+                    'body': JSON.stringify({
+                        'endpoint': sub.endpoint,
+                        'key': key,
+                        'auth': authSecret,
+                        'site_id': site_id,
+                        'land_id': land_id,
+                    })
+                });
+            });
+        }).catch(function(error) {
+            console.log('Service Worker error :^(', error);
+        });
+    }
+}
+window.onload = SendPushMe();
